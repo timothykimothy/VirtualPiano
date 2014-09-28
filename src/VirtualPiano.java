@@ -7,6 +7,7 @@
 \******************************************************************************/
 
 import java.io.IOException;
+import java.util.concurrent.PriorityBlockingQueue;
 
 import com.leapmotion.leap.Arm;
 import com.leapmotion.leap.Controller;
@@ -20,6 +21,11 @@ import com.leapmotion.leap.Listener;
 class LeapListener extends Listener {
 	private float wrist = 0;
 	private int delay = 15;
+	private final PriorityBlockingQueue q;
+	
+	public LeapListener(PriorityBlockingQueue q){
+		this.q =q;
+	}
 
 	public void onInit(Controller controller) {
 		System.out.println("Initialized");
@@ -45,71 +51,82 @@ class LeapListener extends Listener {
 	public void onFrame(Controller controller) {
 		// Get the most recent frame and report some basic information
 		Frame frame = controller.frame();
-		StringBuilder pitchL = new StringBuilder();
-		StringBuilder pitchR = new StringBuilder();
+		StringBuilder pitches = new StringBuilder();
 		// Get hands
 		for (Hand hand : frame.hands()) {
 			if (hand.isLeft()) {
 				// Get arm height
 				Arm arm = hand.arm();
 				wrist = arm.wristPosition().getY();
-				pitchL.append((int) (wrist / 101));
+//				String pitchL = "";
+				int pitchL = (int) (wrist / 101);
 				for (Finger finger : hand.fingers()) {
 					if (finger.type() == Type.TYPE_RING
 							&& frame.id() % delay == 0)
-						if (finger.tipVelocity().getY() < -100)
-							pitchL.append(1);
+						if (finger.tipVelocity().getY() < -200)
+							pitches.append("C" + pitchL + "+");
 					if (finger.type() == Type.TYPE_MIDDLE
 							&& frame.id() % delay == 0)
-						if (finger.tipVelocity().getY() < -100)
-							pitchL.append(2);
+						if (finger.tipVelocity().getY() < -200)
+							pitches.append("D" + pitchL + "+");
 					if (finger.type() == Type.TYPE_INDEX
 							&& frame.id() % delay == 0)
-						if (finger.tipVelocity().getY() < -100)
-							pitchL.append(3);
+						if (finger.tipVelocity().getY() < -200)
+							pitches.append("E" + pitchL + "+");
 					if (finger.type() == Type.TYPE_THUMB
 							&& frame.id() % delay == 0)
-						if (finger.tipVelocity().getY() < -100)
-							pitchL.append(4);
+						if (finger.tipVelocity().getY() < -200)
+							pitches.append("F" + pitchL + "+");
 				}
+//				if (pitchL.length() > 1)
+//					pitches += pitchL;
 			}
 			if (hand.isRight()) {
 				// Get arm height
 				Arm arm = hand.arm();
 				wrist = arm.wristPosition().getY();
-				pitchR.append((int) (wrist / 101));
+//				String pitchR = "";
+				int pitchR = (int) (wrist / 101);
 				for (Finger finger : hand.fingers()) {
 					if (finger.type() == Type.TYPE_RING
 							&& frame.id() % delay == 0)
-						if (finger.tipVelocity().getY() < -100)
-							pitchR.append(8);
+						if (finger.tipVelocity().getY() < -200)
+							pitches.append("C" + pitchR + "+");
 					if (finger.type() == Type.TYPE_MIDDLE
 							&& frame.id() % delay == 0)
-						if (finger.tipVelocity().getY() < -100)
-							pitchR.append(7);
+						if (finger.tipVelocity().getY() < -200)
+							pitches.append("B" + pitchR + "+");
 					if (finger.type() == Type.TYPE_INDEX
 							&& frame.id() % delay == 0)
-						if (finger.tipVelocity().getY() < -100)
-							pitchR.append(6);
+						if (finger.tipVelocity().getY() < -200)
+							pitches.append("A" + pitchR + "+");
 					if (finger.type() == Type.TYPE_THUMB
 							&& frame.id() % delay == 0)
-						if (finger.tipVelocity().getY() < -100)
-							pitchR.append(5);
+						if (finger.tipVelocity().getY() < -200)
+							pitches.append("G" + pitchR + "+");
 				}
+//				if (pitches.length() > 1  && pitchR.length() > 1)
+//					pitches += "_" + pitchR;
+//				else if (pitchR.length() > 1)
+//					pitches += pitchR;
 			}
 		}
-		if (pitchL.length() > 1)
-		System.out.println(pitchL);
-		if (pitchR.length() > 1)
-		System.out.println(pitchR);
+
+		if (pitches.length() > 1)
+			q.add(pitches.substring(0, pitches.length()-1));
 	}
 }
 
 class VirtualPiano {
 	public static void main(String[] args) {
+		PriorityBlockingQueue<String> q = new PriorityBlockingQueue<>();
+		ToneLoader loader = new ToneLoader(q);
+		
 		// Create a sample listener and controller
-		LeapListener listener = new LeapListener();
+		LeapListener listener = new LeapListener(q);
 		Controller controller = new Controller();
+		
+		loader.start();
 
 		// Have the sample listener receive events from the controller
 		controller.addListener(listener);
