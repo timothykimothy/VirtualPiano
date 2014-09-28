@@ -20,11 +20,15 @@ import com.leapmotion.leap.Listener;
 
 class LeapListener extends Listener {
 	private float wrist = 0;
-	private int delay = 15;
-	private final PriorityBlockingQueue q;
+	private int delay = 10;
+	private int yVelocity = -50;
+	private int zVelocity = 52;
+	private final PriorityBlockingQueue<String> q;
+	private final ToneLoader loader;
 	
-	public LeapListener(PriorityBlockingQueue q){
-		this.q =q;
+	public LeapListener(PriorityBlockingQueue<String> q, ToneLoader loader){
+		this.q = q;
+		this.loader = loader;
 	}
 
 	public void onInit(Controller controller) {
@@ -51,6 +55,14 @@ class LeapListener extends Listener {
 	public void onFrame(Controller controller) {
 		// Get the most recent frame and report some basic information
 		Frame frame = controller.frame();
+		Frame pframe = controller.frame(20);
+//		Hand handy2 = frame.hands().frontmost();
+//		for (Finger fingery2 : handy2.fingers()) {
+//			if(fingery2.type() == Type.TYPE_RING)
+//				System.out.println("current: " + fingery2.tipPosition().getZ() + "  previous: " + fingery2.tipPosition().getZ());
+//		}
+		
+		
 		StringBuilder pitches = new StringBuilder();
 		// Get hands
 		for (Hand hand : frame.hands()) {
@@ -59,23 +71,23 @@ class LeapListener extends Listener {
 				Arm arm = hand.arm();
 				wrist = arm.wristPosition().getY();
 //				String pitchL = "";
-				int pitchL = (int) (wrist / 101);
+				int pitchL = (int) (wrist / 101) + 3;
 				for (Finger finger : hand.fingers()) {
 					if (finger.type() == Type.TYPE_RING
 							&& frame.id() % delay == 0)
-						if (finger.tipVelocity().getY() < -200)
+						if (finger.tipVelocity().getY() < yVelocity-15 && finger.tipVelocity().getZ() > zVelocity)
 							pitches.append("C" + pitchL + "+");
 					if (finger.type() == Type.TYPE_MIDDLE
 							&& frame.id() % delay == 0)
-						if (finger.tipVelocity().getY() < -200)
+						if (finger.tipVelocity().getY() < yVelocity && finger.tipVelocity().getZ() > zVelocity)
 							pitches.append("D" + pitchL + "+");
 					if (finger.type() == Type.TYPE_INDEX
 							&& frame.id() % delay == 0)
-						if (finger.tipVelocity().getY() < -200)
+						if (finger.tipVelocity().getY() < yVelocity && finger.tipVelocity().getZ() > zVelocity)
 							pitches.append("E" + pitchL + "+");
 					if (finger.type() == Type.TYPE_THUMB
 							&& frame.id() % delay == 0)
-						if (finger.tipVelocity().getY() < -200)
+						if (finger.tipVelocity().getY() < yVelocity-15)
 							pitches.append("F" + pitchL + "+");
 				}
 //				if (pitchL.length() > 1)
@@ -86,23 +98,23 @@ class LeapListener extends Listener {
 				Arm arm = hand.arm();
 				wrist = arm.wristPosition().getY();
 //				String pitchR = "";
-				int pitchR = (int) (wrist / 101);
+				int pitchR = (int) (wrist / 101) + 3;
 				for (Finger finger : hand.fingers()) {
 					if (finger.type() == Type.TYPE_RING
 							&& frame.id() % delay == 0)
-						if (finger.tipVelocity().getY() < -200)
-							pitches.append("C" + pitchR + "+");
+						if (finger.tipVelocity().getY() < yVelocity-15 && finger.tipVelocity().getZ() > zVelocity)
+							pitches.append("C" + (pitchR+1) + "+");
 					if (finger.type() == Type.TYPE_MIDDLE
 							&& frame.id() % delay == 0)
-						if (finger.tipVelocity().getY() < -200)
+						if (finger.tipVelocity().getY() < yVelocity && finger.tipVelocity().getZ() > zVelocity)
 							pitches.append("B" + pitchR + "+");
 					if (finger.type() == Type.TYPE_INDEX
 							&& frame.id() % delay == 0)
-						if (finger.tipVelocity().getY() < -200)
+						if (finger.tipVelocity().getY() < yVelocity && finger.tipVelocity().getZ() > zVelocity)
 							pitches.append("A" + pitchR + "+");
 					if (finger.type() == Type.TYPE_THUMB
 							&& frame.id() % delay == 0)
-						if (finger.tipVelocity().getY() < -200)
+						if (finger.tipVelocity().getY() < yVelocity-15)
 							pitches.append("G" + pitchR + "+");
 				}
 //				if (pitches.length() > 1  && pitchR.length() > 1)
@@ -111,9 +123,15 @@ class LeapListener extends Listener {
 //					pitches += pitchR;
 			}
 		}
-
+		
 		if (pitches.length() > 1)
-			q.add(pitches.substring(0, pitches.length()-1));
+		{
+			String test = pitches.substring(0, pitches.length()-1);
+			System.out.println(test);
+			q.add(test);
+		}
+		
+		loader.run();
 	}
 }
 
@@ -123,10 +141,10 @@ class VirtualPiano {
 		ToneLoader loader = new ToneLoader(q);
 		
 		// Create a sample listener and controller
-		LeapListener listener = new LeapListener(q);
+		LeapListener listener = new LeapListener(q, loader);
 		Controller controller = new Controller();
 		
-		loader.start();
+//		loader.start();
 
 		// Have the sample listener receive events from the controller
 		controller.addListener(listener);

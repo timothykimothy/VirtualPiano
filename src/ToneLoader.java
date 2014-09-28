@@ -1,6 +1,6 @@
 import java.util.concurrent.PriorityBlockingQueue;
 
-public class ToneLoader extends Thread {
+public class ToneLoader {
 
 	private PriorityBlockingQueue<String> toneQueue;
 	private Play play = new Play();
@@ -12,7 +12,9 @@ public class ToneLoader extends Thread {
 
 	public void run() {
 
-		while (true) {
+//		while (true) {
+		
+
 			while (toneQueue.peek() != null) {
 				final String current = (String) toneQueue.poll();
 				Thread playerThread = new Thread(new Runnable() {
@@ -22,14 +24,14 @@ public class ToneLoader extends Thread {
 					}
 				});
 				playerThread.start();
-				try {
-					playerThread.join();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+//				try {
+//					playerThread.join();
+//				} catch (InterruptedException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
 			}
-		}
+//		}
 	}
 
 	// private String parseNotes (String tone){
